@@ -1,13 +1,10 @@
 ---
 title: "sample"
-always_allow_html: true
 output:
-  xaringan::moon_reader:
-    lib_dir: libs
-    nature:
-      highlightStyle: github
-      highlightLines: true
-      countIncrementalSlides: false
+  html_document:
+    code_folding: show
+    self_contained: true
+    number_section: true
 ---
 
 ```{r setup, include=FALSE}
@@ -19,8 +16,7 @@ library(RcppRoll)
 ```
 
 
-
-## 移動平均
+# 移動平均
 
 ```{r, echo = TRUE}
 iris_roll <- iris %>% 
@@ -34,9 +30,6 @@ DT::datatable(iris_roll %>% head(5), extensions = 'FixedColumns',
 ```
 
 
----
-## 移動平均
-
  - RcppRoll::roll_mean  :   
  https://qiita.com/Sickle-Sword/items/d93aff1d29e1176e25fe
 
@@ -45,7 +38,6 @@ DT::datatable(iris_roll %>% head(5), extensions = 'FixedColumns',
    - fillは、窓が切り取れない行の最初とか最後とかを埋める値
  
 
----
 
 ## 図示
 
@@ -56,8 +48,8 @@ ggplot(iris_roll) +
   geom_point(aes(x = 1:nrow(iris_roll), y = Sepal.Length), color = "blue") 
 ```
 
----
-## lowess
+
+# lowess
 
 
 ```{r, echo = TRUE}
@@ -69,8 +61,6 @@ DT::datatable(iris_lowess %>% head(), extensions = 'FixedColumns',
 ```
 
 
----
-## lowess
 
  - stats::lowess :  
  https://ichi.pro/python-de-no-lowess-kaiki-de-tanai-no-meikakuna-pata-n-o-hakkensuru-hoho-wa-266555640085045  
@@ -80,7 +70,6 @@ DT::datatable(iris_lowess %>% head(), extensions = 'FixedColumns',
    - 引数fで平滑化度合いを変えられる
    
 
----
 
 ## 図示
 
@@ -96,9 +85,9 @@ ggplot() +
         mapping = aes(x = 1:nrow(iris_lowess), y = lowess_Sepal.Length))
 ```
 
----
 
-## 2軸
+
+# 2軸
 
 ```{r, echo = TRUE, warning=F, fig.height=3, fig.width=9}
 second_rate = 1.5
@@ -113,8 +102,7 @@ iris %>%
   sec.axis = sec_axis(~ . / second_rate, name = "2axis_Sepal.Width")
   ) + ylab("1axis_Sepal.Length")
 ```
----
-## 2軸
+
 
  - scale_y_continuousで2軸作成できるようです。  
  ただ、自分で軸の高さを調整しないといけないので、  
