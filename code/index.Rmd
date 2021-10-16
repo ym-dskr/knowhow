@@ -1,0 +1,23 @@
+---
+title: "目次"
+output:
+  html_document:
+    code_folding: show
+    self_contained: true
+    number_section: false
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# まとめ
+
+
+ - [移動平均, lowess, 2軸](01_rollmean_lowess_2axis.html)
+
+ - [時系列基礎](02_time_series.html)
+
+ - [状態空間モデル](03_state_space_model.html)
