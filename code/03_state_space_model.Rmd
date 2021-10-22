@@ -7,6 +7,7 @@ output:
     number_section: true
     toc: true
     toc_float: true
+    mainfont: YuMincho
 ---
 
 ```{r setup, include=FALSE}
@@ -299,4 +300,223 @@ for (i in 1:N){
 }
 
 ```
+
+
+
+# KFASの使い方
+
+KFASによるローカルレベルモデル推定
+
+```{r, message=F, warning=F}
+library(KFAS)
+library(tidyverse)
+
+# 対象データはナイル川の流量データ
+nile_train <- window(Nile, end = 1950)
+
+# 途中に欠損があると仮定
+nile_train[41:60] <- NA
+
+# Step1 モデルの構造を決める
+# H : 観測誤差の分散
+# degree : トレンドモデルを構築（次数を1にすることでローカルレベルモデルにすること示している）
+# Q : 過程誤差の分散
+# H, QはNAにすることで、不明な値であるとみなしてパラメタ推定してくれる
+build_kfas <- SSModel(H = NA, 
+                      nile_train ~ SSMtrend(degree = 1, Q = NA))
+
+# Step2 パラメタ推定
+fit_kfas <- fitSSM(build_kfas, inits = c(1, 1))
+
+
+# Step3, 4 フィルタリング・スムージング 
+result_kfas <- KFS(fit_kfas$model,
+                   filtering = c("state", "mean"),
+                   smoothing = c("state", "mean"))
+```
+
+## STEP1 モデルの構造を決める  
+
+KFASではローカルレベルモデル以外にも、様々なモデルを表現することができる。
+
+ - SSMtrend
+   - degree = 1　ならローカルレベルモデル 
+   - degree = 2　ならローカル線形トレンドモデルを組む
+  
+```{r}
+# degree = 2の場合のサンプル
+# SSMtrend(degree = 2, c(list(NA), list(NA)))
+```
+  
+ - SSMseasonal  
+ 季節変動を表すことができる
+ 
+   - period = 12 にすることで、月単位データのような12か月周期になる。
+   - sea.type = "dummy" ダミー変数を用いる
+   - sea.type = "trigonometric" 三角関数を用いる
+  
+```{r}
+# SSMseasonal(period = 12, sea.type = "dummy", Q = NA)
+```
+  
+ - SSMregression  
+ 外生変数を組み込む。時変係数モデルにも対応。
+ 
+```{r}
+# SSMregression( ~ 外生変数1 + 外生変数2 + ... , Q = NA)
+```
+
+ - SSMarima
+ ARIMAモデルと同等モデルを推定
+ 
+ - 複数の要素が入ったモデル
+ 
+```{r}
+
+# build_sample <- SSModel(H = NA,
+#                         対象データ ~
+#                           SSMtrend(degree = 1, Q = NA) # ローカルレベルモデル
+#                           SSMregression( ~ 外生変数, Q = NA) # 外生変数
+#                           )
+```
+ 
+## STEP2 パラメタ推定
+
+fitSSM関数を用いることで、最尤法によるパラメタ推定ができる。  
+引数のinits = c(1, 1)は、適当に決めたパラメタ（過程・観測誤差の分散）に当たる。  
+これらのパラメタは、最尤法により修正される。  
+
+状態の初期値については、散漫初期化という解決策があるが、  
+パラメタの初期値は決め打ちするしかない。  
+
+ローカルレベルモデルのような単純なモデルでは大きな影響は出ないが、  
+複雑なモデルになると、初期値への依存性が出ることがある。  
+その場合、初期値をいくつかのパターンで試して最も尤度が高くなった結果を採用するのが良い。  
+
+KFASの場合、推定結果は大きく\$optim.outと\$modelに分かれている。  
+
+ - \$optim.out : 推定されたパラメタ
+ - \$model : 最適なパラメタを用いて組みなおされたモデル  
+ 
+組みなおされたモデル(fit_kfas$model)の持つパラメタを確認する。
+
+```{r}
+# 観測誤差の分散
+fit_kfas$model$H
+
+# 過程誤差の分散
+fit_kfas$model$Q
+
+```
+
+## STEP3, 4 フィルタリング・スムージング
+
+KFS関数を用いることでフィルタリングも平滑化も同時に実行できる。  
+フィルタリングだけでいい、という場合はsmoothing = "none"のように明示的に使わないと指定する。
+
+```{r}
+# 結果の保存
+
+# フィルタ化推定量
+mu_filter_kfas <- result_kfas$a[-1]
+
+# 平滑化状態
+mu_smooth_kfas <- result_kfas$alphahat
+```
+
+KFS関数の結果では、
+
+ - \$a : 状態の1期先予測値。当期の観測値を用いた補正（フィルタリング）が行われる前の値であることに注意。  
+ ただし、前期の観測値を用いたフィルタリングは行われている。そのため、$aは前期のフィルタ化推定量であるとみなせる。  
+ 1時点ずれているので、最初の値（観測値がまだ得られていない0時点目のフィルタ化推定量）を[-1]として切り捨てている。  
+ （切り捨てられた部分は、散漫初期化されているので意味がない値）
+ - \$alphahat : 平滑化状態
+
+## 図示
+
+フィルタ化推定量を図示する。
+
+```{r, fig.height=5, fig.width=10}
+
+df_filter <- data.frame(y = as.numeric(nile_train[1:80]),
+                        time = 1871:1950,
+                        mu_filter = mu_filter_kfas)
+
+ggplot(df_filter,
+       aes(x = time, y = y)) +
+  labs(title = "filtered estimates") +
+  geom_line(alpha = 0.6, linetype = "dashed") +
+  geom_line(aes(y = mu_filter), size = 1.2)
+
+
+```
+
+
+欠損期間で状態がずっと同じ値になっている。  
+これがローカルレベルモデル補完の特徴。
+
+## KFASによる状態の推定と信頼・予測区間
+
+平滑化状態と、その信頼区間・予測区間を求める。
+
+ - 信頼区間：状態が収まるであろう区間
+ - 予測区間：観測値が収まるであろう区間
+ 
+予測区間には、観測誤差の大きさも加味されている。
+
+```{r}
+# predict関数を使い信頼区間を求める。
+# intercval = confidenceを指定すると、信頼区間となる。
+# level = 0.95を指定すると95％信頼区間となる。
+
+smooth_conf <- predict(fit_kfas$model,
+                       interval = "confidence",
+                       level = 0.95)
+
+head(smooth_conf)
+
+```
+予測区間を求める。  
+interval = "prediction" とするだけで予測区間変わる。
+
+```{r}
+smooth_pred <- predict(fit_kfas$model, 
+                       interval = "prediction",
+                       level = 0.95)
+
+head(smooth_pred)
+
+                      
+```
+
+fitの値は平滑化状態の値がそのまま入っている。
+
+## KFASによる予測
+
+predict関数内で、n.ahead = 20とすることで、20地点先まで予測ができる。
+
+```{r}
+forecast_pred <- predict(fit_kfas$model, 
+                         interval = "prediction",
+                         level = 0.95,
+                         n.ahead = 20)
+
+# 図示の為予測結果を平滑化状態と結合する
+estimate_all <- rbind(smooth_pred, forecast_pred)
+
+# 図示の為データをまとめる
+df_forecast <- cbind(data.frame(y = c(as.numeric(nile_train), rep(NA, 20)), 
+                                time = 1871:1970),
+                     as.data.frame(estimate_all))
+
+ggplot(df_forecast, aes(x = time, y = y)) +
+  labs(title = "fit and prediction") +
+  geom_line(alpha = 0.5) + 
+  geom_point(alpha = 0.5) +
+  geom_line(aes(y = fit), size = 1.2) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3)
+```
+
+
+
 
