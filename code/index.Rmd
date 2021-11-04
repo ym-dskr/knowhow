@@ -2,22 +2,30 @@
 title: "目次"
 output:
   html_document:
-    code_folding: show
-    self_contained: true
-    number_section: false
+    theme: cosmo
+    highlight: textmate
     toc: true
-    toc_float: true
+    toc_float:
+      collapse: false
+    df_print: "tibble"
+    css: site_style.css
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# まとめ
-
-
- - [移動平均, lowess, 2軸](01_rollmean_lowess_2axis.html)
+# 時系列
 
  - [時系列基礎](02_time_series.html)
 
  - [状態空間モデル](03_state_space_model.html)
+ 
+ 
+# 気象
+
+ - [grib2, neCDFの取り扱い](04_wgrib2.html)
+
+# その他
+
+ - [移動平均, lowess, 2軸](01_rollmean_lowess_2axis.html)
