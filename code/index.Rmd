@@ -23,7 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
  
  
 # 気象
-
+ 
+ - [気象基礎](05_weather.html)
  - [grib2, neCDFの取り扱い](04_wgrib2.html)
 
 # その他
