@@ -1,5 +1,5 @@
 ---
-title: "目次"
+title: "knowhowメモ集"
 output:
   html_document:
     theme: cosmo
@@ -25,7 +25,26 @@ knitr::opts_chunk$set(echo = TRUE)
 # 気象
  
  - [気象基礎](05_weather.html)
+ 
  - [grib2, neCDFの取り扱い](04_wgrib2.html)
+ 
+
+# 機械学習
+
+- [Cross Validation]()
+
+- [評価指標]()
+
+- [特徴量エンジニアリング]()
+
+- [特徴量選択]()
+
+- [パラメタ最適化]()
+
+
+# 画像処理
+
+- [画像処理一般(OpenCV2)](06_opencv.pdf)
 
 # その他
 
