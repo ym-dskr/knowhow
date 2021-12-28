@@ -15,19 +15,31 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# 時系列
 
- - [時系列基礎](02_time_series.html)
 
- - [状態空間モデル](03_state_space_model.html)
- 
- 
 # 気象
  
- - [気象基礎](05_weather.html)
+ - [気象基礎](pages/05_weather.html)
  
- - [grib2, neCDFの取り扱い](04_wgrib2.html)
+ - [grib2, neCDFの取り扱い](pages/04_wgrib2.html)
+
+
+# 統計
+
+ - [統計基礎]()
+
+ - 緑本
  
+   - [1-3章 一般化線形モデルまで](pages/緑本1-3_一般化線形モデルまで.html)
+ 
+   - [4章 GLMのモデル選択](pages/緑本4_GLMのモデル選択.html)
+
+
+# 時系列
+
+ - [時系列基礎](pages/02_time_series.html)
+
+ - [状態空間モデル](pages/03_state_space_model.html)
 
 # 機械学習
 
@@ -44,8 +56,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # 画像処理
 
-- [画像処理一般(OpenCV2)](06_opencv.pdf)
+- [画像処理一般(OpenCV2)](pages/06_opencv.pdf)
 
 # その他
 
- - [移動平均, lowess, 2軸](01_rollmean_lowess_2axis.html)
+ - [移動平均, lowess, 2軸](pages/01_rollmean_lowess_2axis.html)
